@@ -431,6 +431,7 @@ We can do this 2 ways.  First lets do it manually:
     cd myfirst-jjb
     jenkins-jobs --conf $HOME/jjb-conf.ini test jjb
 
+##### Testing our JJB job with Tox
 The other way we can do it is by using `tox` and running the predefine tests against the python version you will be using.  
 
 > Make sure to read the `tox.ini` to understand how the tests are setup
@@ -447,6 +448,7 @@ Again we can do this manually as such:
 
     jenkins-jobs --conf $HOME/jjb-conf.ini update jjb
 
+##### Adding our JJB job with Tox
 Or you can use tox again:
 
     tox -vr py27 -e update
