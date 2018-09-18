@@ -9,3 +9,5 @@ They show you how to create a couple of example jenkins job builder jobs with:
 * leveraging docker, jenkins, tox
 
 Plus you get to play around with some fun ci/devops tools
+
+Check out `docs/README.md` for full tutorial
