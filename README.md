@@ -10,4 +10,4 @@ They show you how to create a couple of example jenkins job builder jobs with:
 
 Plus you get to play around with some fun ci/devops tools
 
-Check out `docs/README.md` for full tutorial
+Check out `docs/README.md` for full tutorial.
