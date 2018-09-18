@@ -2,7 +2,6 @@
 Jenkins Job Builder, Jenkins, Docker and Hulk Smash!!
 ---
 
-**Table of Content**
 * TOC
 {:toc}
 # Introduction
