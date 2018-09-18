@@ -107,7 +107,7 @@ At a high level we’ll cover some of the most basic definitions you require to 
 * project
 
 
-##### defaults
+#### defaults
 Defaults collect job attributes (including actions) and will supply those values when the job is created, unless superseded by a value in the ‘Job’_ definition. If a set of Defaults is specified with the name global, that will be used by all Job (and Job Template) definitions unless they specify a different Default object with the defaults attribute. For example:
 
 This config starts with the - defaults:: line. This specifies that this section contains default values rather than job specifications. In this section we specify a useful set of defaults including a default description indicating ansible manages these jobs, jobs are allowed to run concurrently, and a thirty minute job timeout.
@@ -356,7 +356,7 @@ This can be used to provide common settings for particular templates. Notice the
 ```
 
 
-##### project
+#### project
 The projects.yaml pulls all of the magic together. It specifies the arguments to and instantiates the job templates as real jobs.
 
 The purpose of a project is to collect related jobs together, and provide values for the variables in a Job Template. It looks like this:
