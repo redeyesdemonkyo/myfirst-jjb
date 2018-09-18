@@ -104,6 +104,7 @@ At a high level we’ll cover some of the most basic definitions you require to 
 * macros (ie: builders)
 * job
 * job-template
+* views
 * project
 
 
@@ -205,6 +206,8 @@ Using it in a job
          - hello-world:
             myname: "ZERO"
 ```
+
+> Note: scm stands for source control managment
 
 #### job
 Each job specification begins with -job:. Under this section you can specify the job details like name, node, etc. Any detail defined in the defaults section that is not defined under this job will be included as well. In addition to attribute details you can also specify how jenkins should perform this job. What trigger methods should be used, the build steps, jenkins publishing steps and so on. The macros defined earlier make this easy and simple.
@@ -353,6 +356,34 @@ This can be used to provide common settings for particular templates. Notice the
           - shell: |
              echo "Job Name: template-variable-defaults-{num}-{type}"
              echo "Variable: {test_var}"
+```
+
+
+#### views
+Views are a way to display jobs group together in the UI.  For our testing we’ll use the following view:
+
+```yaml
+- view:
+    name: myview
+    view-type: list
+    regex: 'mykool-project-.*'
+```
+
+Where the `regex` will match our job names
+
+Using the views in projects:
+
+```yaml
+# lets put all the magic together
+- project:
+    name: mykool-project
+    node: master
+    views:
+        - myview
+
+    jobs:
+        - '{name}-myfirst-job'
+        - '{name}-postbuild-job'
 ```
 
 
