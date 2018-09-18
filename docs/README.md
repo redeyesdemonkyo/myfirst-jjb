@@ -1,12 +1,3 @@
----
-layout: post
-title:  "Getting dirty with Jenkins Job Builder, Jenkins and Docker"
-date:   2018-09-17 22:18:00 +0000
-last_modified_at: 2018-09-17 22:18:00
-category: post
-tags: [JJB, Jenkins-Job-Builder, Jenkins, Docker, Tox]
----
-
 # Getting dirty with Jenkins Job Builder, Jenkins and Docker
 **TABLE OF CONTENT**
 
