@@ -1,13 +1,11 @@
+* Table of Content
+{:toc}
 # Jenkins Job Builder, Jenkins, Docker and Hulk Smash!!
 This is a basic introduction tutorial for jenkins job builder (JJB) and how we can leverage docker to get familiar with JJB and get us a sandbox to break/test/fix things
 
 *”Cause if you ain’t broke it yet, you don’t know how it works!”*
 
 Said by me :)
-
-* Table of Content
-
-{:toc}
 
 ----
 ## Setting up docker jenkins
