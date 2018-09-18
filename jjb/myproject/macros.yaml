@@ -1,0 +1,37 @@
+# generic macro with 'yourname' variable (must be pass a variable to use)
+- builder:
+    name: echo-hello-world
+    builders:
+      - shell: echo "hello world {myname}"
+
+# using it to make it static
+- builder:
+    name: hello-flynn
+    builders:
+      - echo-hello-world:
+          myname: "flynn"
+
+- builder:
+    name: myhostname
+    builders:
+      - shell: |
+          hostname -A
+
+# using scripts in builders
+- builder:
+    name: runscripts
+    builders:
+      - shell:
+          # include-raw-escape: escaping variables before reading file or files as stings
+          !include-raw-escape:
+              - myip.sh
+              - whoami.sh
+
+
+# run job post-build on success
+- publisher:
+    name: postbuild-job
+    publishers:
+      - trigger:
+          project: '{job-name}'
+          threshold: SUCCESS
