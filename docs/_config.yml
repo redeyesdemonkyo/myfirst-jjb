@@ -1,1 +1,4 @@
 theme: jekyll-theme-hacker
+
+kramdown:
+    auto_ids: true
