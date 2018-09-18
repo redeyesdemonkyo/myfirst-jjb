@@ -5,7 +5,7 @@ This is a basic introduction tutorial for jenkins job builder (JJB) and how we c
 
 Said by me :)
 
-* TOC
+* Table of Content
 
 {:toc}
 
