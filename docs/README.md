@@ -1,4 +1,13 @@
-# Jenkins Job Builder, Jenkins, Docker and Hulk
+---
+layout: post
+title:  "Getting dirty with Jenkins Job Builder, Jenkins and Docker"
+date:   2018-09-17 22:18:00 +0000
+last_modified_at: 2018-09-17 22:18:00
+category: post
+tags: [JJB, Jenkins-Job-Builder, Jenkins, Docker, Tox]
+---
+
+# Getting dirty with Jenkins Job Builder, Jenkins and Docker
 **TABLE OF CONTENT**
 
 * TOC
@@ -462,5 +471,3 @@ You should see output similar to this one assuming it passed:
 Now you should be able to see the jobs in jenkins.  [jenkins-localhost](http://localhost:8080/) Noticed that the git repo `myproject` creates 2 jobs and it shows how to create depency (post-build downstream job). 
 
 Now you are ready to start creating/testing/debugging your NEW jobs
-
-> why `Hulk smash` cause my kid says that when he’s smashing things together.
