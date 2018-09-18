@@ -1,6 +1,6 @@
 # jenkins job builder example files
 
-these are basic jjb example files to get you started.
+these are basic jjb jobs example files to get you from ZERO to HERO in JJB.
 
 They show you how to create a couple of example jenkins job builder jobs with:
 
