@@ -1,11 +1,16 @@
-# Docker jenkins How-To
+# Jenkins Job Builder, Jenkins, Docker and Hulk Smash!!
+This is a basic introduction tutorial for jenkins job builder (JJB) and how we can leverage docker to get familiar with JJB and get us a sandbox to break/test/fix things
+
+*”Cause if you ain’t broke it yet, you don’t know how it works!”*
+
+Said by me :)
 
 ----
 ## Setting up docker jenkins
 > this assumes you have already install docker
 
 pull and run image from dockerhub
- 
+
 > connects port 8080 & 5050 from localhost to docker container.  
 This will also start the initial jenkins setup
 
@@ -34,6 +39,12 @@ Next you want to create the first admin user.  After this you’ll be ready to s
 Passwd: f00b@r1  
 Email: <your@email.tld>
 
+Before we continue we will need to set up a label for our node.  Since we are the master node we will label out node master.  
+
+In the `Labels` field type in `master` We can do that from here:
+
+[master-node-settings](http://localhost:8080/computer/(master)/configure)
+
 ----
 ## My first jenkins job builder (*JJB*)
 
@@ -47,6 +58,9 @@ We will do it using *virtualenv*
     $ virtualenv -p python2.7  jjb-env # -p use specific python version mirror your jenkins version
     $ . ~/jjb-env/bin/activate
     $ pip install jenkins-job-builder # if not using virtualenv use *--user*
+    $ pip install tox # this is require if you want to run test via tox
+
+> tox is a tool that aims to automate and standardize testing in Python.
 
 #### JJB Configuration
 
@@ -59,30 +73,287 @@ file in the following locations, in order:
 For now we will create a JJB configuration file in $HOME.
 
 ```sh
-    cat >> $HOME/jjb-test.ini <<EOF
-    [jenkins]    
-    user=admin  
-    password=f00b@r1  
-    url=http://localhost:8080  
-    query_plugins_info=False   
-    
-    [job_builder]  
-    include_path=ci/jjb/scripts  
-    EOF
+cat >> $HOME/jjb-conf.ini <<EOF
+[jenkins]    
+user=admin  
+password=f00b@r1
+query_plugins_info=False
+url=http://localhost:8080   
+
+[job_builder]
+recursive=True
+ignore_cache=True
+# Can be set to a ‘:’ delimited list of paths
+include_path=jjb/scripts
+flush_cache=True
+EOF
 ```
+
+> NOTE: you require `recursive=True` if you are using multiple files for your defaults, templates, projects, etc under a directory
 
 ### JJB job definitions
 
 At a high level we’ll cover some of the most basic definitions you require to build jobs
 
-* project
-* job-template
+* defaults
 * macros (ie: builders)
 * job
-  * job-groups
-* defaults
+* job-template
+* project
+
+
+##### defaults
+Defaults collect job attributes (including actions) and will supply those values when the job is created, unless superseded by a value in the ‘Job’_ definition. If a set of Defaults is specified with the name global, that will be used by all Job (and Job Template) definitions unless they specify a different Default object with the defaults attribute. For example:
+
+This config starts with the - defaults:: line. This specifies that this section contains default values rather than job specifications. In this section we specify a useful set of defaults including a default description indicating ansible manages these jobs, jobs are allowed to run concurrently, and a thirty minute job timeout.
+
+```yaml
+- defaults:
+    name: global
+    description: 'Do not edit this job through the web!  It is a JJB configutation'
+    project-type: freestyle
+    concurrent: false
+
+    wrappers:
+      - timeout:
+          timeout: 30
+          fail: true
+      - timestamps
+
+    logrotate:
+      daysToKeep: 5
+      numToKeep: -1
+```
+
+You can define variables that will be realized in a Job Template.
+
+```yaml
+    - defaults:
+        name: global
+        arch: 'i386'
+    
+    - project:
+        name: project-name
+        jobs:
+            - 'build-{arch}'
+            - 'build-{arch}':
+                arch: 'amd64'
+    
+    - job-template:
+        name: 'build-{arch}'
+        builders:
+            - shell: "echo Build arch {arch}."
+```
+
+Would create jobs build-i386 and build-amd64.
+
+You can also reference a variable {template-name} in any value and it will be substituted by the name of the current job template being processed.
+
+
+#### macros
+Macros exist to give meaningful names to blocks of configuration that can be used in job configs in place of the blocks they name and can be use as builders. For example:
+
+```yaml
+- builder:
+    name: git-prep
+    builders:
+      - shell: "/slave_scripts/git-prep.sh"
+
+- builder:
+    name: docs
+    builders:
+      - shell: "/slave_scripts/run-docs.sh"
+
+# this generic macro builders that takes argument *yourname"
+- builder:
+    name: hello-world
+    builders:
+     - shell: "echo hello world {myname}"
+
+# static builder using a predefined generic parameter macro
+- builder:
+    name: hello-world-flynn
+    builders:
+     - hello-world:
+         myname: "flynn"
+
+- publisher:
+    name: console-log
+    publishers:
+      - scp:
+          site: 'scp-server'
+          files:
+            - target: 'logs/$JOB_NAME/$BUILD_NUMBER'
+              copy-console: true
+              copy-after-failure: true
+```
+
+Using it in a job
+
+```yaml 
+    - job:
+        name: "testingjob"
+        builders:
+         # The static macro:
+         - hello-world-flynn
+         # Generic macro call with a parameter
+         - hello-world:
+            myname: "ZERO"
+```
+
+#### job
+Each job specification begins with -job:. Under this section you can specify the job details like name, node, etc. Any detail defined in the defaults section that is not defined under this job will be included as well. In addition to attribute details you can also specify how jenkins should perform this job. What trigger methods should be used, the build steps, jenkins publishing steps and so on. The macros defined earlier make this easy and simple.
+
+Lets first look at a static job
+
+```yaml
+    - job:
+        name: job-name
+        project-type: freestyle
+        defaults: global
+        description: 'Do not edit this job through the web!'
+        disabled: false
+        display-name: 'Fancy job name'
+        concurrent: true
+        workspace: /srv/build-area/job-name
+        quiet-period: 5
+        block-downstream: false
+        block-upstream: false
+        retry-count: 3
+        node: NodeLabel1 || NodeLabel2 || cucumber || trusty
+        logrotate:
+          daysToKeep: 3
+          numToKeep: 20
+          artifactDaysToKeep: -1
+          artifactNumToKeep: -1
+```
+
+Now one using some of the macross we defined earlier.  
+
+```yaml
+- job:
+    name: example-docs
+    node: node-label
+
+    triggers:
+      - zuul
+
+    builders:
+      - git-prep
+      - docs
+
+    publishers:
+      - scp:
+          site: 'scp-server'
+          files:
+            - target: 'dir/ectory'
+              source: 'build/html/foo'
+              keep-hierarchy: true
+      - console-log
+```
+
+##### job parameters definition
+* ***project-type:*** Defaults to “freestyle”, but “maven” as well as “multijob”, “flow”, “pipeline” or “externaljob” can also be specified.
+* ***defaults:*** Specifies a set of Defaults to use for this job, defaults to ‘’global’‘. If you have values that are common to all of your jobs, create a global Defaults object to hold them, and no further configuration of individual jobs is necessary. If some jobs should not use the global defaults, use this field to specify a different set of defaults.
+* ***description:*** The description for the job. By default, the description “!– Managed by Jenkins Job Builder” is applied.
+* ***disabled:*** Boolean value to set whether or not this job should be disabled in Jenkins. Defaults to false (job will be enabled).
+* ***display-name:*** Optional name shown for the project throughout the Jenkins web GUI in place of the actual job name. The jenkins_jobs tool cannot fully remove this trait once it is set, so use caution when setting it. Setting it to the same string as the job’s name is an effective un-set workaround. Alternately, the field can be cleared manually using the Jenkins web interface.
+* ***concurrent:*** Boolean value to set whether or not Jenkins can run this job concurrently. Defaults to false.
+* ***workspace:*** Path for a custom workspace. Defaults to Jenkins default configuration.
+* ***folder:*** The folder attribute provides an alternative to using ‘<path>/<name>’ as the job name to specify which Jenkins folder to upload the job to. Requires the CloudBees Folders Plugin.
+* ***child-workspace:*** Path for a child custom workspace. Defaults to Jenkins default configuration. This parameter is only valid for matrix type jobs.
+* ***quiet-period:*** Number of seconds to wait between consecutive runs of this job. Defaults to 0.
+* ***block-downstream:*** Boolean value to set whether or not this job must block while downstream jobs are running. Downstream jobs are determined transitively. Defaults to false.
+* ***block-upstream:*** Boolean value to set whether or not this job must block while upstream jobs are running. Upstream jobs are determined transitively. Defaults to false.
+* ***auth-token:*** Specifies an authentication token that allows new builds to be triggered by accessing a special predefined URL. Only those who know the token will be able to trigger builds remotely.
+* ***retry-count:*** If a build fails to checkout from the repository, Jenkins will retry the specified number of times before giving up.
+* ***node:*** Restrict where this job can be run. If there is a group of machines that the job can be built on, you can specify that label as the node to tie on, which will cause Jenkins to build the job on any of the machines with that label. For matrix projects, this parameter will only restrict where the parent job will run.
+* ***logrotate:*** The Logrotate section allows you to automatically remove old build history. It adds the logrotate attribute to the Job definition. All logrotate attributes default to “-1” (keep forever). Deprecated on jenkins >=1.637: use the build-discarder property instead
+* ***jdk:*** The name of the jdk to use
+* ***raw:*** If present, this section should contain a single xml entry. This XML will be inserted at the top-level of the Job definition.
+
+
+#### job-template
+Job templates allow you to specify a job config once with arguments that are replaced with the values specified in projects.yaml. This allows you to reuse job configs across many projects. First you need a templated job config:
+
+Any variables not specified at the project level will be inherited from the Defaults.
+
+Basic usage (*It’s name will depend on what is supplied to the Project.*):
+
+```yaml
+    - job-template:
+        name: '{name}-unit-tests'
+```
+
+```yaml
+- job-template:
+    name: '{name}-docs'
+
+    triggers:
+        # can also use @daily or @midnight for cron time
+        - timed: 'H/15 * * * *'
+
+    builders:
+      - git-prep
+      - docs
+
+    publishers:
+      - scp:
+          site: 'scp-server'
+          files:
+            - target: 'dir/ectory'
+              source: 'build/html/foo'
+              keep-hierarchy: true
+      - console-log
+
+    node: '{node}'
+
+
+- job-group:
+    name: python-jobs
+    jobs:
+      - '{name}-docs'
+```
+
+
+If you use the variable {template-name}, the name of the template itself (e.g. {name}-unit-tests in the above example) will be substituted in. This is useful in cases where you need to trace a job back to its template.
+
+To facilitate reuse of templates with many variables that can be substituted, but where in most cases the same or no value is needed, it is possible to specify defaults for the variables within the templates themselves.
+
+This can be used to provide common settings for particular templates. Notice the `Ids` use to simplify multiple jobs with same template.  For example:
+
+```yaml
+    - project:
+        name: template_variable_defaults
+        jobs:
+            - 'template-variable-defaults-{num}':
+                num: 1
+                disabled_var: true
+            - 'template-variable-defaults-{num}':
+                test_var: Goodbye World
+                num: 2
+
+    - job-template:
+        # template specific defaults
+        # empty value causes disabled_var to be ignored internally
+        disabled_var:
+        test_var: Hello World
+        type: periodic
+    
+        # template settings
+        name: 'template-variable-defaults-{num}-{type}'
+        id: 'template-variable-defaults-{num}'
+        disabled: '{obj:disabled_var}'
+        builders:
+          - shell: |
+             echo "Job Name: template-variable-defaults-{num}-{type}"
+             echo "Variable: {test_var}"
+```
+
 
 ##### project
+The projects.yaml pulls all of the magic together. It specifies the arguments to and instantiates the job templates as real jobs.
+
 The purpose of a project is to collect related jobs together, and provide values for the variables in a Job Template. It looks like this:
 
 ```yaml
@@ -90,6 +361,22 @@ The purpose of a project is to collect related jobs together, and provide values
         name: my-kool-project
         jobs:
           - '{name}-unit-tests'
+```
+
+```yaml
+- project:
+    name: example1
+    node: bare-trusty
+
+    jobs:
+      - python-jobs
+
+- project:
+    name: example2
+    node: bare-centos6
+
+    jobs:
+      - {name}-docs
 ```
     
 Any number of arbitrarily named additional fields may be specified, and they will be available for variable substitution in the job template. Any job templates listed under jobs: will be realized with those values. The example above would create the job called ‘my-kool-project-unit-tests’ in Jenkins. 
@@ -125,187 +412,48 @@ The following example would create multiple jobs from the list of `pyver`
         - '{name}-{pyver}'
 ```
 
-#### job-template
-A jobs template can be reuse for multiple jobs that are similar using variables.  Use a Project to realize the job with appropriate variable substitution. Any variables not specified at the project level will be inherited from the Defaults.
-
-Basic usage (*It’s name will depend on what is supplied to the Project.*):
-
-```yaml
-    - job-template:
-        name: '{name}-unit-tests'
-```
-
-If you use the variable {template-name}, the name of the template itself (e.g. {name}-unit-tests in the above example) will be substituted in. This is useful in cases where you need to trace a job back to its template.
-
-To facilitate reuse of templates with many variables that can be substituted, but where in most cases the same or no value is needed, it is possible to specify defaults for the variables within the templates themselves.
-
-This can be used to provide common settings for particular templates. Notice the `Ids` use to simplify mutliple jobs with same template.  For example:
-
-```yaml
-    - project:
-        name: template_variable_defaults
-        jobs:
-            - 'template-variable-defaults-{num}':
-                num: 1
-                disabled_var: true
-            - 'template-variable-defaults-{num}':
-                test_var: Goodbye World
-                num: 2
-
-    - job-template:
-        # template specific defaults
-        # empty value causes disabled_var to be ignored internally
-        disabled_var:
-        test_var: Hello World
-        type: periodic
-    
-        # template settings
-        name: 'template-variable-defaults-{num}-{type}'
-        id: 'template-variable-defaults-{num}'
-        disabled: '{obj:disabled_var}'
-        builders:
-          - shell: |
-             echo "Job Name: template-variable-defaults-{num}-{type}"
-             echo "Variable: {test_var}"
-```
-
-#### macros
-These are thing like builders ie:
-
-```yaml
-    # this generic macro builders that takes argument *yourname"
-    - builder:
-        name: hello-world
-        builders:
-         - shell: "echo hello world {yourname}"
-
-    # static builder using a predefined generic parameter macro
-    - builder:
-        name: hello-world-flynn
-        builders:
-         - hello-world:
-            myname: "flynn"
-```
-
-Using it in a job
-
-```yaml 
-    - job:
-        name: "testingjob"
-        builders:
-         # The static macro:
-         - hello-world-flynn
-         # Generic macro call with a parameter
-         - hello-world:
-            myname: "ZERO"
-```
-
-#### job
-job is where you define your job ideally using job-template and macros
-
-Lets first look at a static job
-
-```yaml
-    - job:
-        name: job-name
-        project-type: freestyle
-        defaults: global
-        description: 'Do not edit this job through the web!'
-        disabled: false
-        display-name: 'Fancy job name'
-        concurrent: true
-        workspace: /srv/build-area/job-name
-        quiet-period: 5
-        block-downstream: false
-        block-upstream: false
-        retry-count: 3
-        node: NodeLabel1 || NodeLabel2 || cucumber || trusty
-        logrotate:
-          daysToKeep: 3
-          numToKeep: 20
-          artifactDaysToKeep: -1
-          artifactNumToKeep: -1
-```
-
-
-##### job parameters definition
-* ***project-type:*** Defaults to “freestyle”, but “maven” as well as “multijob”, “flow”, “pipeline” or “externaljob” can also be specified.
-* ***defaults:*** Specifies a set of Defaults to use for this job, defaults to ‘’global’‘. If you have values that are common to all of your jobs, create a global Defaults object to hold them, and no further configuration of individual jobs is necessary. If some jobs should not use the global defaults, use this field to specify a different set of defaults.
-* ***description:*** The description for the job. By default, the description “!– Managed by Jenkins Job Builder” is applied.
-* ***disabled:*** Boolean value to set whether or not this job should be disabled in Jenkins. Defaults to false (job will be enabled).
-* ***display-name:*** Optional name shown for the project throughout the Jenkins web GUI in place of the actual job name. The jenkins_jobs tool cannot fully remove this trait once it is set, so use caution when setting it. Setting it to the same string as the job’s name is an effective un-set workaround. Alternately, the field can be cleared manually using the Jenkins web interface.
-* ***concurrent:*** Boolean value to set whether or not Jenkins can run this job concurrently. Defaults to false.
-* ***workspace:*** Path for a custom workspace. Defaults to Jenkins default configuration.
-* ***folder:*** The folder attribute provides an alternative to using ‘<path>/<name>’ as the job name to specify which Jenkins folder to upload the job to. Requires the CloudBees Folders Plugin.
-* ***child-workspace:*** Path for a child custom workspace. Defaults to Jenkins default configuration. This parameter is only valid for matrix type jobs.
-* ***quiet-period:*** Number of seconds to wait between consecutive runs of this job. Defaults to 0.
-* ***block-downstream:*** Boolean value to set whether or not this job must block while downstream jobs are running. Downstream jobs are determined transitively. Defaults to false.
-* ***block-upstream:*** Boolean value to set whether or not this job must block while upstream jobs are running. Upstream jobs are determined transitively. Defaults to false.
-* ***auth-token:*** Specifies an authentication token that allows new builds to be triggered by accessing a special predefined URL. Only those who know the token will be able to trigger builds remotely.
-* ***retry-count:*** If a build fails to checkout from the repository, Jenkins will retry the specified number of times before giving up.
-* ***node:*** Restrict where this job can be run. If there is a group of machines that the job can be built on, you can specify that label as the node to tie on, which will cause Jenkins to build the job on any of the machines with that label. For matrix projects, this parameter will only restrict where the parent job will run.
-* ***logrotate:*** The Logrotate section allows you to automatically remove old build history. It adds the logrotate attribute to the Job definition. All logrotate attributes default to “-1” (keep forever). Deprecated on jenkins >=1.637: use the build-discarder property instead
-* ***jdk:*** The name of the jdk to use
-* ***raw:*** If present, this section should contain a single xml entry. This XML will be inserted at the top-level of the Job definition.
-
-
-##### defaults
-Defaults collect job attributes (including actions) and will supply those values when the job is created, unless superseded by a value in the ‘Job’_ definition. If a set of Defaults is specified with the name global, that will be used by all Job (and Job Template) definitions unless they specify a different Default object with the defaults attribute. For example:
-
-```
-    - defaults:
-        name: global
-        description: 'Do not edit this job through the web!'
-```
-
-Will set the job description for every job created.
-
-You can define variables that will be realized in a Job Template.
-
-```yaml
-    - defaults:
-        name: global
-        arch: 'i386'
-    
-    - project:
-        name: project-name
-        jobs:
-            - 'build-{arch}'
-            - 'build-{arch}':
-                arch: 'amd64'
-    
-    - job-template:
-        name: 'build-{arch}'
-        builders:
-            - shell: "echo Build arch {arch}."
-```
-
-Would create jobs build-i386 and build-amd64.
-
-You can also reference a variable {template-name} in any value and it will be substituted by the name of the current job template being processed.
-
-
 
 ### Creating my first job
-For our testing purposes we’ll download a predefined job with git clone
+For our testing purposes we’ll download predefined example jobs with git clone
 
-    git clone git@github.com:pulp/pulp-ci.git
+    git clone git@github.com:redeyesdemonkyo/myfirst-jjb.git
 
-Lets test our job before we do anything else (-o for especifing output file)
+Lets test our job before we do anything else
 
-    cd ci/jjb
-    Jenkins-jobs --conf $HOME/jjb-test.ini test -o /path/to/outdir/ ci/jjb/jobs hello-world
+We can do this 2 ways.  First lets do it manually:
 
-Now lets add our job
+    cd myfirst-jjb
+    jenkins-jobs --conf $HOME/jjb-conf.ini test jjb
 
-    jenkins-jobs --conf $HOME/jjb-test.ini --ignore-cache update ci/jjb/jobs hello-world
+The other way we can do it is by using `tox` and running the predefine tests against the python version you will be using.  
 
-You should see output similar to this one:
+> Make sure to read the `tox.ini` to understand how the tests are setup
 
-    INFO:root:Updating jobs in ['ci/jobs'] (['hello-world'])
-    ... output omitted ...
-    INFO:jenkins_jobs.builder:Number of jobs generated:  1
-    INFO:jenkins_jobs.builder:Creating jenkins job pulp-installer
-    INFO:root:Number of jobs updated: 1
+    tox -vr py27 -e test
 
-Now you should be able to see the job in jenkins and are ready for creating NEW jobs
+> in this case py27 = python2.7 # it can be specify on the tox.ini so here is redundant      
+-e test # means it will run the test command from out tox.ini commands
+
+Now lets add our job.  Assuming your test pass (which they should have if you just clone the repo)  We will now add them by replacing `test` with `update`.
+
+Again we can do this manually as such: 
+
+    jenkins-jobs --conf $HOME/jjb-conf.ini update jjb
+
+Or you can use tox again:
+
+    tox -vr py27 -e update
+
+You should see output similar to this one assuming it passed:
+
+    using tox.ini: /home/henryt/git/myfirst-jjb/tox.ini
+    …
+    …
+      update: commands succeeded
+      congratulations :)
+
+Now you should be able to see the jobs in jenkins.  [jenkins-localhost](http://localhost:8080/) Noticed that the git repo `myproject` creates 2 jobs and it shows how to create depency (post-build downstream job). 
+
+Now you are ready to start creating/testing/debugging your NEW jobs
+
+> why `Hulk smash` cause my kid says that when he’s smashing things together.

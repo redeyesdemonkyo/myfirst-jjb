@@ -1,0 +1,29 @@
+# values here will be interpolated from your project.yaml configuration
+- job-template:
+    name: '{name}-myfirst-job'
+    concurrent: false
+    node: '{node}'
+
+    # every 15 minutes with random start times (thus it can run at 16/31/46 instead of 15/30/45 etc)
+    triggers:
+      - timed: 'H/15 * * * *'
+
+    builders:
+      - hello-flynn
+      - echo-hello-world:
+          myname: "tron"
+
+    # we will do a post build trigger on success
+    # we could also use 'triggers: reverse' from the downstream job for this
+    publishers:
+      - postbuild-job:
+          job-name: '{name}-postbuild-job'
+
+
+- job-template:
+    name: '{name}-postbuild-job'
+    node: '{node}'
+
+    builders:
+      - runscripts
+      - myhostname

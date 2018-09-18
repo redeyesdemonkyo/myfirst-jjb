@@ -1,0 +1,12 @@
+- defaults:
+    name: global
+    # when using pipe '|' its similar to using EOF where new lines and returns will show up in the config
+    description: |
+        Do not edit this job through the web!  It is a JJB configutation
+
+    project-type: freestyle
+    concurrent: false
+
+    build-discarder:
+      daysToKeep: 5
+      numToKeep: -1

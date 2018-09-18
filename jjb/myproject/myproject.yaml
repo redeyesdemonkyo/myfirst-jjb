@@ -1,0 +1,8 @@
+# lets put all the magic together
+- project:
+    name: mykool-project
+    node: master
+
+    jobs:
+        - '{name}-myfirst-job'
+        - '{name}-postbuild-job'
