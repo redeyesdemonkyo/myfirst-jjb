@@ -1,0 +1,4 @@
+- view:
+    name: myview
+    view-type: list
+    regex: 'mykool-project-.*'

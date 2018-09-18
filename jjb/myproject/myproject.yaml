@@ -2,6 +2,8 @@
 - project:
     name: mykool-project
     node: master
+    views:
+        - myview
 
     jobs:
         - '{name}-myfirst-job'
