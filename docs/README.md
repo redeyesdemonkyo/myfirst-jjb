@@ -423,6 +423,7 @@ For our testing purposes we’ll download predefined example jobs with git clone
 
     git clone git@github.com:redeyesdemonkyo/myfirst-jjb.git
 
+#### Testing our JJB job
 Lets test our job before we do anything else
 
 We can do this 2 ways.  First lets do it manually:
@@ -439,6 +440,7 @@ The other way we can do it is by using `tox` and running the predefine tests aga
 > in this case py27 = python2.7 # it can be specify on the tox.ini so here is redundant      
 -e test # means it will run the test command from out tox.ini commands
 
+#### Adding our JJB job to jenkins
 Now lets add our job.  Assuming your test pass (which they should have if you just clone the repo)  We will now add them by replacing `test` with `update`.
 
 Again we can do this manually as such: 
