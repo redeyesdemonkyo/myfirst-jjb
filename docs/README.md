@@ -5,6 +5,10 @@ This is a basic introduction tutorial for jenkins job builder (JJB) and how we c
 
 Said by me :)
 
+* TOC
+
+{:toc}
+
 ----
 ## Setting up docker jenkins
 > this assumes you have already install docker
