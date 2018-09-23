@@ -30,7 +30,7 @@
 
 # run job post-build on success
 - publisher:
-    name: postbuild-job
+    name: postbuild-job-success
     publishers:
       - trigger:
           project: '{job-name}'

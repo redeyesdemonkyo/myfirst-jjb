@@ -1,0 +1,28 @@
+- parameter:
+    name: gerrit-params
+
+    parameters:
+      - string:
+          name: GERRIT_REFSPEC
+          default: ''
+          description: |
+              This parameter is here to allow manual builds of the
+              package from the Jenkins UI
+              (https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger).
+      - string:
+          name: GERRIT_BRANCH
+          default: master
+          description: |
+              This parameter is here to allow manual builds of the
+              package from the Jenkins UI
+              (https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger).
+
+
+- scm:
+    name: myfirst-jjb-repo
+    scm:
+     - git:
+        url: git@github.com:redeyesdemonkyo/myfirst-jjb.git
+        basedir: myfirst-jjb
+        branches:
+         - origin/master

@@ -8,6 +8,10 @@
     triggers:
       - timed: 'H/15 * * * *'
 
+    # clone the repo
+    scm:
+      - myfirst-jjb-repo
+
     builders:
       - hello-flynn
       - echo-hello-world:
@@ -16,7 +20,7 @@
     # we will do a post build trigger on success
     # we could also use 'triggers: reverse' from the downstream job for this
     publishers:
-      - postbuild-job:
+      - postbuild-job-success:
           job-name: '{name}-postbuild-job'
 
 

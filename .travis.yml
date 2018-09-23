@@ -1,0 +1,18 @@
+sudo: required
+os: linux
+language: python
+python:
+  - "2.7"
+  - "3.5"
+branches:
+  only:
+    - master
+# install dependencies
+install:
+  - pip install -r requirements.txt
+# environment variables
+env:
+  - TOXENV=test
+# run  test using script  config.
+script:
+  - tox -vr
