@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb.svg?branch=master)](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb)
+
 # jenkins job builder example files
 
 these are basic jjb jobs example files to get you from ZERO to HERO in JJB.
