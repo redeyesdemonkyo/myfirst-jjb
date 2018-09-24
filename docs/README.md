@@ -4,7 +4,7 @@
 * TOC
 {:toc}
 # Introduction
-This is a basic introduction tutorial for jenkins job builder (JJB) and how we can leverage docker to get familiar with JJB and get us a sandbox to break/test/fix things
+This is a basic introduction tutorial for [jenkins job builder](https://docs.openstack.org/infra/jenkins-job-builder/index.html#contents) (JJB) and how we can leverage [docker](https://docs.docker.com/get-started/) to get familiar with JJB and get us a sandbox to break/test/fix things
 
 *”Cause if you ain’t broke it yet, you don’t know how it works!”*
 
@@ -65,7 +65,7 @@ We will do it using *virtualenv*
     $ pip install jenkins-job-builder # if not using virtualenv use *--user*
     $ pip install tox # this is require if you want to run test via tox
 
-> tox is a tool that aims to automate and standardize testing in Python.
+> [tox](https://tox.readthedocs.io/en/latest/index.html) is a tool that aims to automate and standardize testing in Python.
 
 #### JJB Configuration
 
