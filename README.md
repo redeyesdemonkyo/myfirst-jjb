@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb.svg?branch=master)](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb) [![Travis Build](https://img.shields.io/travis/redeyesdemonkyo/myfirst-jjb/master.svg?style=for-the-badge)](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb)
+[![Build Status](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb.svg?branch=master)](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb) [![Travis Build](https://img.shields.io/travis/redeyesdemonkyo/myfirst-jjb/master.svg?style=plastic)](https://travis-ci.org/redeyesdemonkyo/myfirst-jjb)
 
 # jenkins job builder example files
 
